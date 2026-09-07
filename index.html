@@ -15,16 +15,7 @@
         .timer-danger { color: #dc2626 !important; background: #fee2e2 !important; }
 
         .item-card { margin: 15px 0; padding: 15px; background: #f0f9ff; border-radius: 16px; border: 2px dashed #0284c7; }
-        
-        /* สไตล์สำหรับปรับขนาดรูปภาพขยะ */
-        .item-image { 
-            width: 150px; 
-            height: 150px; 
-            object-fit: contain; 
-            margin: 0 auto 10px auto; 
-            display: block;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15)); 
-        }
+        .item-image { width: 140px; height: 140px; object-fit: contain; margin: 0 auto 10px auto; display: block; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15)); }
         .item-title { font-size: 22px; font-weight: bold; color: #0369a1; }
 
         .bin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
@@ -34,10 +25,25 @@
         .yellow { background-color: #eab308; color: #1e293b; }
         .blue { background-color: #2563eb; }
         .red { background-color: #dc2626; }
+
         #result-modal, #leaderboard-area { display: none; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
         th { background-color: #f1f5f9; }
+
+        /* สไตล์สำหรับส่วนเฉลยคำตอบ */
+        .review-section { margin-top: 25px; text-align: left; }
+        .review-title { font-weight: bold; font-size: 16px; color: #1e293b; margin-bottom: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
+        .review-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; margin-bottom: 10px; font-size: 14px; }
+        .review-card.wrong { border-left: 5px solid #ef4444; background: #fff5f5; }
+        .review-card.correct { border-left: 5px solid #22c55e; background: #f0fdf4; }
+        .review-item-name { font-weight: bold; color: #0f172a; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+        .review-img { width: 40px; height: 40px; object-fit: contain; }
+        .badge-bin { display: inline-block; padding: 2px 8px; border-radius: 4px; color: white; font-size: 12px; font-weight: bold; }
+        .badge-organic { background-color: #16a34a; }
+        .badge-recycle { background-color: #ca8a04; }
+        .badge-general { background-color: #2563eb; }
+        .badge-hazardous { background-color: #dc2626; }
     </style>
 </head>
 <body>
@@ -59,7 +65,6 @@
         <div style="font-weight: bold; color: #64748b;">ข้อที่ <span id="current-step">1</span> / <span id="total-step">20</span></div>
         
         <div class="item-card">
-            <!-- แท็กแสดงรูปภาพขยะ -->
             <img id="item-image" class="item-image" src="" alt="รูปภาพขยะ">
             <div id="item-display" class="item-title">กำลังโหลด...</div>
         </div>
@@ -72,14 +77,21 @@
         </div>
     </div>
 
-    <!-- หน้าแสดงผลคะแนน -->
+    <!-- หน้าแสดงผลคะแนน และเฉลย -->
     <div id="result-modal">
         <h3>🎉 สรุปผลคะแนน</h3>
         <p id="score-text" style="font-size: 20px; font-weight: bold; color: #16a34a;"></p>
         <p id="time-text" style="color: #64748b;"></p>
         <p id="status-text" style="color: #2563eb;">กำลังบันทึกคะแนน...</p>
+        
         <button class="submit-btn" onclick="showLeaderboard()">🏆 ดูตารางคะแนนสูงสุด</button>
         <button class="submit-btn" style="background-color: #64748b;" onclick="resetGame()">🔄 เล่นอีกครั้ง</button>
+
+        <!-- ส่วนแสดงเฉลยรายละเอียดข้อที่ตอบผิด/ถูก -->
+        <div class="review-section">
+            <div class="review-title">📋 รายละเอียดและเฉลยคำตอบ:</div>
+            <div id="review-list"></div>
+        </div>
     </div>
 
     <!-- หน้าตารางคะแนน (Leaderboard) -->
@@ -95,7 +107,16 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQhLfqEWbwqm8ZM2_ApJiwVaJf1Dp32kuf-IvGmbCjryYNz5z7lMSK16rXDfe3khNSwA/exec";
     const SECONDS_PER_QUESTION = 15;
 
-    // คลังข้อมูลคำถามขยะ (ใส่ URL รูปภาพในช่อง img)
+    // ข้อความแปลประเภทถังขยะสำหรับแสดงในเฉลย
+    const binNames = {
+        organic: "🟢 ขยะอินทรีย์",
+        recycle: "🟡 ขยะรีไซเคิล",
+        general: "🔵 ขยะทั่วไป",
+        hazardous: "🔴 ขยะอันตราย",
+        timeout: "⏳ หมดเวลา (ไม่ได้ตอบ)"
+    };
+
+    // คลังข้อมูลคำถามขยะ
     const itemPool = [
         { name: "เปลือกแอปเปิ้ล", type: "organic", img: "https://lh3.googleusercontent.com/d/1CYgeYW3zdEd8lXs3AQmSWmzK01G5K63N" },
         { name: "ขวดแก้ว", type: "recycle", img: "https://lh3.googleusercontent.com/d/1w2nFtdLFSFIHkWiAV2xuzn6dxiCpQyx2" },
@@ -109,7 +130,7 @@
         { name: "กระป๋องน้ำอัดลม", type: "recycle", img: "https://lh3.googleusercontent.com/d/1n4d265dnYGDcnOchIGbaJTS6KI6-wj9b" },
         { name: "กล่องโฟมบรรจุอาหาร", type: "general", img: "https://lh3.googleusercontent.com/d/1AjLFnuOr_hZY12IXsyno0ogpRmH82inH" },
         { name: "ยาหมดอายุ", type: "hazardous", img: "https://lh3.googleusercontent.com/d/1QZbrfMDIDXX_UuFnrpyBNwdEoL691aal" },
-        { name: "ก้างปลา / เศษอาหาร", type: "organic", img: "https://lh3.googleusercontent.com/d/1-xfIYlnn-0bzRexIm-n73McMTHVs7Bgy" },
+        { name: "เศษผ้า", type: "recycle", img: "https://lh3.googleusercontent.com/d/1-xfIYlnn-0bzRexIm-n73McMTHVs7Bgy" },
         { name: "กระป๋องสเปรย์สี", type: "hazardous", img: "https://lh3.googleusercontent.com/d/1wDfctFtYnP0lRHCjaWI_YLD4QstG5Ht4" },
         { name: "หลอดดูดน้ำพลาสติก", type: "general", img: "https://lh3.googleusercontent.com/d/1y1YgfCSAenk79LrBGMWpN71cykY-4sSK" },
         { name: "หนังสือพิมพ์เก่า", type: "recycle", img: "https://lh3.googleusercontent.com/d/1EMZB77ETd5Gu40Fdy8XsYdanIeA-MQyS" },
@@ -130,8 +151,8 @@
     let questionTimeLeft = SECONDS_PER_QUESTION;
     let timerInterval;
     let totalTimeUsed = 0;
+    let userAnswers = []; // ตัวแปรสำหรับบันทึกประวัติคำตอบของผู้เล่น
 
-    // ฟังก์ชันสุ่มลำดับคำถาม
     function shuffleArray(array) {
         let shuffled = [...array];
         for (let i = shuffled.length - 1; i > 0; i--) {
@@ -148,7 +169,6 @@
             return;
         }
 
-        // สุ่มคำถามใหม่ และดึงมา 20 ข้อ
         items = shuffleArray(itemPool).slice(0, 20);
 
         document.getElementById("start-screen").style.display = "none";
@@ -157,6 +177,7 @@
         currentIndex = 0;
         score = 0;
         totalTimeUsed = 0;
+        userAnswers = [];
         
         loadQuestion();
     }
@@ -164,7 +185,6 @@
     function loadQuestion() {
         if (currentIndex < items.length) {
             document.getElementById("item-display").innerText = items[currentIndex].name;
-            // เปลี่ยนมาดึง URL จากคีย์ img
             document.getElementById("item-image").src = items[currentIndex].img;
             document.getElementById("current-step").innerText = currentIndex + 1;
             document.getElementById("total-step").innerText = items.length;
@@ -192,8 +212,10 @@
                 timerBox.classList.add("timer-danger");
             }
 
+            // หากหมดเวลาถือว่าตอบผิดและไม่มีการเลือกถังขยะ
             if (questionTimeLeft <= 0) {
                 clearInterval(timerInterval);
+                recordAnswer('timeout');
                 currentIndex++;
                 loadQuestion();
             }
@@ -202,11 +224,22 @@
 
     function selectBin(selectedType) {
         clearInterval(timerInterval);
+        recordAnswer(selectedType);
+        
         if (selectedType === items[currentIndex].type) {
             score++;
         }
         currentIndex++;
         loadQuestion();
+    }
+
+    // ฟังก์ชันบันทึกการตอบแต่ละข้อ
+    function recordAnswer(selectedType) {
+        userAnswers.push({
+            item: items[currentIndex],
+            selected: selectedType,
+            isCorrect: selectedType === items[currentIndex].type
+        });
     }
 
     function finishGame() {
@@ -216,7 +249,39 @@
         document.getElementById("score-text").innerText = `คุณ ${playerName} ได้ ${score} / ${items.length} คะแนน!`;
         document.getElementById("time-text").innerText = `ใช้เวลาเล่นรวมทั้งหมด ${totalTimeUsed} วินาที`;
         
+        // สร้างรายการเฉลยคำตอบ
+        renderReviewList();
+        
         sendDataToSheets();
+    }
+
+    // ฟังก์ชันแสดงรายการเฉลยคำตอบ
+    function renderReviewList() {
+        const reviewContainer = document.getElementById("review-list");
+        let html = "";
+
+        userAnswers.forEach((ans, index) => {
+            const statusClass = ans.isCorrect ? "correct" : "wrong";
+            const iconStatus = ans.isCorrect ? "✅ ตอบถูกต้อง" : "❌ ตอบผิด";
+
+            html += `
+                <div class="review-card ${statusClass}">
+                    <div class="review-item-name">
+                        <img src="${ans.item.img}" class="review-img" alt="ขยะ">
+                        <div>
+                            <div>ข้อที่ ${index + 1}: ${ans.item.name}</div>
+                            <div style="font-size: 12px; font-weight: normal;">${iconStatus}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 6px; font-size: 13px;">
+                        <span>คำตอบของคุณ: <b>${binNames[ans.selected]}</b></span><br>
+                        ${!ans.isCorrect ? `<span style="color: #15803d;">เฉลยที่ถูกต้อง: <b>${binNames[ans.item.type]}</b></span>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+
+        reviewContainer.innerHTML = html;
     }
 
     function sendDataToSheets() {
