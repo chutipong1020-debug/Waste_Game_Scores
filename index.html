@@ -3,209 +3,613 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เกมคัดแยกขยะแสนสนุก♻️</title>
+    <title>เกมคัดแยกขยะขยะ </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Tahoma', sans-serif; text-align: center; background-color: #f0f4f8; margin: 0; padding: 15px; }
-        .container { max-width: 480px; margin: 0 auto; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { color: #2c3e50; margin-bottom: 10px; }
-        input[type="text"] { width: 80%; padding: 12px; margin: 15px 0; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; }
-        .btn-start, .submit-btn { padding: 12px 24px; background-color: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .timer-box { font-size: 18px; font-weight: bold; color: #d97706; background: #fef3c7; padding: 8px 15px; border-radius: 20px; display: inline-block; margin-bottom: 15px; }
-        .item-card { font-size: 26px; font-weight: bold; margin: 15px 0; padding: 20px; background: #e0f2fe; border-radius: 12px; border: 2px dashed #0284c7; }
-        .bin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
-        .bin-btn { padding: 15px 5px; color: white; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; font-size: 15px; transition: transform 0.1s; }
-        .bin-btn:active { transform: scale(0.96); }
-        .green { background-color: #16a34a; }
-        .yellow { background-color: #eab308; color: #1e293b; }
-        .blue { background-color: #2563eb; }
-        .red { background-color: #dc2626; }
-        #result-modal, #leaderboard-area { display: none; margin-top: 15px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
-        th { background-color: #f1f5f9; }
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+        }
+
+        .bin-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .bin-btn:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .bin-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .timer-bar {
+            transition: width 0.1s linear, background-color 0.3s ease;
+        }
+
+        @keyframes pulse-fast {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.08); opacity: 0.8; }
+        }
+
+        .timer-urgent {
+            animation: pulse-fast 0.5s infinite;
+        }
+
+        /* Glassmorphism Card */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .img-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1rem;
+        }
+
+        .img-container img {
+            transition: transform 0.3s ease;
+        }
+
+        .img-container:hover img {
+            transform: scale(1.05);
+        }
     </style>
 </head>
-<body>
+<body class="text-slate-100 flex items-center justify-center p-4">
 
-<div class="container">
-    <h2>♻️ เกมคัดแยกขยะ</h2>
-
-    <!-- หน้าลงชื่อก่อนเล่น -->
-    <div id="start-screen">
-        <p>กรุณากรอกชื่อของคุณก่อนเริ่มเล่น:</p>
-        <input type="text" id="player-name" placeholder="ชื่อ / ฉายา / หมู่ที่" maxlength="20">
-        <br>
-        <button class="btn-start" onclick="startGame()">เริ่มเล่นเกม 🚀</button>
-    </div>
-
-    <!-- หน้าเล่นเกม -->
-    <div id="game-area" style="display: none;">
-        <div class="timer-box">⏱️ เวลาเหลือ: <span id="timer">30</span> วินาที</div>
-        <div style="font-weight: bold; color: #64748b;">ข้อที่ <span id="current-step">1</span> / <span id="total-step">5</span></div>
+    <div class="max-w-3xl w-full mx-auto">
         
-        <div class="item-card" id="item-display">กำลังโหลด...</div>
-        
-        <div class="bin-grid">
-            <button class="bin-btn green" onclick="selectBin('organic')">🟢 ขยะอินทรีย์</button>
-            <button class="bin-btn yellow" onclick="selectBin('recycle')">🟡 ขยะรีไซเคิล</button>
-            <button class="bin-btn blue" onclick="selectBin('general')">🔵 ขยะทั่วไป</button>
-            <button class="bin-btn red" onclick="selectBin('hazardous')">🔴 ขยะอันตราย</button>
+        <!-- Header & Title -->
+        <header class="text-center mb-6">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium mb-2">
+                <i class="fa-solid fa-recycle"></i> เกมแยกขยะรักษ์โลก 20 ข้อ
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">
+                แยกขยะให้ถูกถัง!
+            </h1>
+            <p class="text-slate-400 text-sm mt-1">เวลาข้อละ <span class="text-amber-400 font-bold">10 วินาที</span> เลือกถังขยะให้ถูกต้องแม่นยำ</p>
+        </header>
+
+        <!-- Main Game Container -->
+        <div id="game-card" class="glass-card rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+
+            <!-- START SCREEN -->
+            <div id="start-screen" class="text-center py-8 px-4">
+                <div class="w-24 h-24 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-500/30 text-4xl">
+                    <i class="fa-solid fa-trash-can-arrow-up"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-3">พร้อมทดสอบความรู้การแยกขยะหรือยัง?</h2>
+                <p class="text-slate-300 max-w-md mx-auto mb-8 text-sm sm:text-base leading-relaxed">
+                    มีขยะทั้งหมด <strong class="text-emerald-400">20 ชนิด</strong> คุณจะมีเวลาเพียง <strong class="text-amber-400">10 วินาที</strong> ในการตัดสินใจทิ้งขยะลงถังสีที่ถูกต้อง!
+                </p>
+
+                <!-- Color legend preview -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-lg mx-auto mb-8 text-xs font-semibold">
+                    <div class="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 flex items-center gap-2">
+                        <div class="w-3.5 h-3.5 rounded-full bg-emerald-500"></div> ขยะเปียก / อินทรีย์
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-amber-950/60 border border-amber-500/40 text-amber-300 flex items-center gap-2">
+                        <div class="w-3.5 h-3.5 rounded-full bg-amber-400"></div> ขยะรีไซเคิล
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-blue-950/60 border border-blue-500/40 text-blue-300 flex items-center gap-2">
+                        <div class="w-3.5 h-3.5 rounded-full bg-blue-500"></div> ขยะทั่วไป
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 flex items-center gap-2">
+                        <div class="w-3.5 h-3.5 rounded-full bg-rose-500"></div> ขยะอันตราย
+                    </div>
+                </div>
+
+                <button onclick="startGame()" class="px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold text-lg shadow-lg shadow-emerald-500/25 transition-all transform hover:scale-105 active:scale-95">
+                    <i class="fa-solid fa-play mr-2"></i> เริ่มเล่นเกมเลย!
+                </button>
+            </div>
+
+            <!-- QUIZ SCREEN -->
+            <div id="quiz-screen" class="hidden">
+                <!-- Top Status Bar -->
+                <div class="flex items-center justify-between mb-4 text-sm font-semibold">
+                    <div class="flex items-center gap-2 text-slate-300">
+                        <span>ข้อที่ <span id="current-question-num" class="text-emerald-400 text-lg">1</span> / 20</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-1.5 text-amber-400">
+                            <i class="fa-solid fa-star"></i>
+                            <span id="score-display" class="text-lg">0</span> คะแนน
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timer Section -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center text-xs text-slate-400 mb-1">
+                        <span><i class="fa-regular fa-clock mr-1"></i>เวลาเหลือ</span>
+                        <span id="timer-text" class="font-bold text-amber-400 text-sm">10.0s</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden p-0.5 border border-slate-700">
+                        <div id="timer-bar" class="timer-bar bg-emerald-400 h-full rounded-full w-full"></div>
+                    </div>
+                </div>
+
+                <!-- Trash Item Display -->
+                <div class="bg-slate-900/80 rounded-2xl p-4 border border-slate-700/60 text-center mb-6 shadow-inner">
+                    <div class="img-container max-w-xs h-48 mx-auto mb-3 bg-slate-950 flex items-center justify-center border border-slate-800">
+                        <img id="trash-image" src="" alt="Trash Image" class="w-full h-full object-contain p-2">
+                    </div>
+                    <h3 id="trash-name" class="text-xl sm:text-2xl font-bold text-white mb-1">ชื่อขยะ</h3>
+                    <p id="trash-desc" class="text-xs sm:text-sm text-slate-400">รายละเอียดคำอธิบายขยะชนิดนี้</p>
+                </div>
+
+                <!-- 4 Color Bins Selection Grid -->
+                <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                    
+                    <!-- Green: Organic -->
+                    <button onclick="checkAnswer('green')" class="bin-btn bg-emerald-600/20 hover:bg-emerald-600/30 border-2 border-emerald-500/50 hover:border-emerald-400 rounded-2xl p-3.5 sm:p-4 text-left flex items-center gap-3 group">
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500 flex items-center justify-center text-white text-xl sm:text-2xl shadow-md flex-shrink-0 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-leaf"></i>
+                        </div>
+                        <div>
+                            <div class="text-emerald-400 font-bold text-sm sm:text-base">ถังสีเขียว</div>
+                            <div class="text-slate-300 text-xs sm:text-sm">ขยะอินทรีย์ / เปียก</div>
+                        </div>
+                    </button>
+
+                    <!-- Yellow: Recycle -->
+                    <button onclick="checkAnswer('yellow')" class="bin-btn bg-amber-600/20 hover:bg-amber-600/30 border-2 border-amber-500/50 hover:border-amber-400 rounded-2xl p-3.5 sm:p-4 text-left flex items-center gap-3 group">
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-400 flex items-center justify-center text-slate-950 text-xl sm:text-2xl shadow-md flex-shrink-0 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-arrows-spin"></i>
+                        </div>
+                        <div>
+                            <div class="text-amber-400 font-bold text-sm sm:text-base">ถังสีเหลือง</div>
+                            <div class="text-slate-300 text-xs sm:text-sm">ขยะรีไซเคิล</div>
+                        </div>
+                    </button>
+
+                    <!-- Blue: General -->
+                    <button onclick="checkAnswer('blue')" class="bin-btn bg-blue-600/20 hover:bg-blue-600/30 border-2 border-blue-500/50 hover:border-blue-400 rounded-2xl p-3.5 sm:p-4 text-left flex items-center gap-3 group">
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-500 flex items-center justify-center text-white text-xl sm:text-2xl shadow-md flex-shrink-0 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-box-open"></i>
+                        </div>
+                        <div>
+                            <div class="text-blue-400 font-bold text-sm sm:text-base">ถังสีฟ้า / น้ำเงิน</div>
+                            <div class="text-slate-300 text-xs sm:text-sm">ขยะทั่วไป</div>
+                        </div>
+                    </button>
+
+                    <!-- Red: Hazardous -->
+                    <button onclick="checkAnswer('red')" class="bin-btn bg-rose-600/20 hover:bg-rose-600/30 border-2 border-rose-500/50 hover:border-rose-400 rounded-2xl p-3.5 sm:p-4 text-left flex items-center gap-3 group">
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-rose-500 flex items-center justify-center text-white text-xl sm:text-2xl shadow-md flex-shrink-0 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div>
+                            <div class="text-rose-400 font-bold text-sm sm:text-base">ถังสีแดง</div>
+                            <div class="text-slate-300 text-xs sm:text-sm">ขยะอันตราย</div>
+                        </div>
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- RESULT SCREEN -->
+            <div id="result-screen" class="hidden text-center py-6">
+                <div id="result-badge" class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl"></div>
+                <h2 id="result-title" class="text-2xl sm:text-3xl font-bold mb-2">สรุปผลคะแนน</h2>
+                <p id="result-subtitle" class="text-slate-300 text-sm mb-6">คุณทำคะแนนแยกขยะได้ดังนี้</p>
+
+                <!-- Score Box -->
+                <div class="bg-slate-900/90 rounded-xl p-4 border border-slate-700/80 max-w-sm mx-auto mb-6 grid grid-cols-2 gap-4">
+                    <div class="border-r border-slate-700 pr-2">
+                        <div class="text-xs text-slate-400 mb-1">ตอบถูกต้อง</div>
+                        <div class="text-2xl font-bold text-emerald-400"><span id="final-correct">0</span> / 20</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-400 mb-1">คะแนนรวม</div>
+                        <div class="text-2xl font-bold text-amber-400"><span id="final-score">0</span></div>
+                    </div>
+                </div>
+
+                <!-- Answer History Summary List -->
+                <div class="text-left mb-6">
+                    <h4 class="text-sm font-semibold text-slate-300 mb-2"><i class="fa-solid fa-list-check mr-1 text-emerald-400"></i> สรุปการตอบทั้ง 20 ข้อ:</h4>
+                    <div id="history-list" class="max-h-52 overflow-y-auto pr-1 space-y-2 text-xs">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+
+                <button onclick="startGame()" class="px-8 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold text-base shadow-lg shadow-emerald-500/25 transition-all transform hover:scale-105 active:scale-95">
+                    <i class="fa-solid fa-rotate-right mr-2"></i> เล่นใหม่อีกครั้ง
+                </button>
+            </div>
+
         </div>
+
+        <!-- Footer credit -->
+        <footer class="text-center text-xs text-slate-500 mt-6">
+            เกมแยกขยะเพื่อสิ่งแวดล้อม &copy; 2026 | จับเวลา 10 วินาทีต่อข้อ
+        </footer>
+
     </div>
 
-    <!-- หน้าแสดงผลคะแนน -->
-    <div id="result-modal">
-        <h3>🎉 สรุปผลคะแนน</h3>
-        <p id="score-text" style="font-size: 20px; font-weight: bold; color: #16a34a;"></p>
-        <p id="time-text" style="color: #64748b;"></p>
-        <p id="status-text" style="color: #2563eb;">กำลังบันทึกคะแนน...</p>
-        <button class="submit-btn" onclick="showLeaderboard()">🏆 ดูตารางคะแนนสูงสุด</button>
-        <button class="submit-btn" style="background-color: #64748b;" onclick="resetGame()">🔄 เล่นอีกครั้ง</button>
-    </div>
-
-    <!-- หน้าตารางคะแนน (Leaderboard) -->
-    <div id="leaderboard-area">
-        <h3>🏆 ตารางอันดับผู้เล่น (Top 10)</h3>
-        <div id="leaderboard-table">กำลังโหลดข้อมูล...</div>
-        <br>
-        <button class="submit-btn" onclick="resetGame()">🔄 กลับไปเริ่มใหม่</button>
-    </div>
-</div>
-
-<script>
-    // ** ใส่ Web App URL จาก Apps Script ที่นี่ **
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwT-lT8qtMHQIITJMYD1sax751fuWmO-fW0yhI4PpJ_akrMvnO9GgEI2aamO0Sa4A7JsQ/exec";
-
-    const items = [
-        { name: "🍎 เปลือกแอปเปิ้ล", type: "organic" },
-        { name: "🍾 ขวดแก้ว", type: "recycle" },
-        { name: "🛍️ ถุงพลาสติกเปื้อนแกง", type: "general" },
-        { name: "🔋 ถ่านไฟฉายใช้แล้ว", type: "hazardous" },
-        { name: "📦 กล่องกระดาษ", type: "recycle" }
-    ];
-
-    let playerName = "";
-    let currentIndex = 0;
-    let score = 0;
-    let timeLeft = 30;
-    let timerInterval;
-    let timeUsed = 0;
-
-    function startGame() {
-        playerName = document.getElementById("player-name").value.trim();
-        if (!playerName) {
-            alert("กรุณากรอกชื่อก่อนเริ่มเล่นครับ");
-            return;
-        }
-
-        document.getElementById("start-screen").style.display = "none";
-        document.getElementById("game-area").style.display = "block";
+    <!-- AUDIO SYNTHESIZER (No external audio files required) -->
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
-        currentIndex = 0;
-        score = 0;
-        timeLeft = 30;
-        
-        loadQuestion();
-        startTimer();
-    }
-
-    function startTimer() {
-        document.getElementById("timer").innerText = timeLeft;
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            document.getElementById("timer").innerText = timeLeft;
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                finishGame();
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
             }
-        }, 1000);
-    }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
 
-    function loadQuestion() {
-        if (currentIndex < items.length) {
-            document.getElementById("item-display").innerText = items[currentIndex].name;
-            document.getElementById("current-step").innerText = currentIndex + 1;
-            document.getElementById("total-step").innerText = items.length;
-        } else {
-            clearInterval(timerInterval);
-            finishGame();
+            if (type === 'correct') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2); // A5
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
+                osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.25); // A2
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.25);
+            } else if (type === 'tick') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.05);
+            }
         }
-    }
+    </script>
 
-    function selectBin(selectedType) {
-        if (selectedType === items[currentIndex].type) {
-            score++;
+    <!-- GAME LOGIC SCRIPT -->
+    <script>
+        // 20 Trash Questions Database with Google usercontent images
+        const trashData = [
+            {
+                name: "ขวดน้ำพลาสติกใส (PET)",
+                category: "yellow",
+                categoryText: "ขยะรีไซเคิล",
+                desc: "พลาสติกใส สามารถนำไปหลอมแปรรูปเป็นเส้นใยหรือขวดใหม่ได้",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/13800923845912576784_0"
+            },
+            {
+                name: "เปลือกกล้วย",
+                category: "green",
+                categoryText: "ขยะอินทรีย์ / เปียก",
+                desc: "ขยะอินทรีย์ ย่อยสลายได้ง่าย นำไปทำปุ๋ยหมักชีวภาพได้ดี",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/14833844145194089224_0"
+            },
+            {
+                name: "กล่องกระดาษ / ลังกระดาษ",
+                category: "yellow",
+                categoryText: "ขยะรีไซเคิล",
+                desc: "กระดาษลูกฟูกแห้ง สามารถนำกลับเข้ากระบวนการรีไซเคิลได้",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/17541365655006504967_0"
+            },
+            {
+                name: "ขวดแก้วเครื่องดื่ม",
+                category: "yellow",
+                categoryText: "ขยะรีไซเคิล",
+                desc: "ขวดแก้วสามารถนำไปหลอมใหม่ได้หมุนเวียนไม่รู้จบ",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/2529102794871744193_0"
+            },
+            {
+                name: "ถ่านไฟฉายใช้แล้ว",
+                category: "red",
+                categoryText: "ขยะอันตราย",
+                desc: "มีสารเคมีอันตรายและโลหะหนัก ห้ามทิ้งปะปนกับขยะทั่วไป",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/10789061098946325886_0"
+            },
+            {
+                name: "ถุงพลาสติกหูหิ้วปนเปื้อน",
+                category: "blue",
+                categoryText: "ขยะทั่วไป",
+                desc: "พลาสติกบางย่อยสลายยากและรีไซเคิลไม่คุ้มค่า ให้ทิ้งถังขยะทั่วไป",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/6662224579098777019_0"
+            },
+            {
+                name: "เศษแอปเปิ้ล / แกนผลไม้",
+                category: "green",
+                categoryText: "ขยะอินทรีย์ / เปียก",
+                desc: "เศษอาหารและผลไม้ ย่อยสลายเน่าเสียได้ รวดเร็ว",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/13789080925302584544_0"
+            },
+            {
+                name: "กระป๋องน้ำอัดลมอลูมิเนียม",
+                category: "yellow",
+                categoryText: "ขยะรีไซเคิล",
+                desc: "อลูมิเนียมมีมูลค่าสูง สามารถอัดก้อนไปหลอมใช้ใหม่ได้ 100%",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/14427006820685565184_0"
+            },
+            {
+                name: "หลอดไฟฟลูออเรสเซนต์",
+                category: "red",
+                categoryText: "ขยะอันตราย",
+                desc: "ภายในบรรจุปอปรอท เป็นพิษต่อสิ่งแวดล้อม ต้องคัดแยกพิเศษ",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/6460920545754282122_0"
+            },
+            {
+                name: "กล่องนมกระดาษ UHT",
+                category: "yellow",
+                categoryText: "ขยะรีไซเคิล",
+                desc: "ล้าง ลอก พับแกะกล่อง สามารถส่งรีไซเคิลทำแผ่นไม้อัดได้",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/6780692699786980324_0"
+            },
+            {
+                name: "กล่องโฟมใส่อาหาร",
+                category: "blue",
+                categoryText: "ขยะทั่วไป",
+                desc: "โฟมสไตรีนใช้เวลานานร้อยๆ ปีในการย่อยสลาย ต้องกำจัดอย่างถูกวิธี",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/18339056650220434956_0"
+            },
+            {
+                name: "ยาหมดอายุ / เม็ดยา",
+                category: "red",
+                categoryText: "ขยะอันตราย",
+                desc: "เคมีภัณฑ์ยาหลุดรอดสู่ธรรมชาติส่งผลเสียต่อระบบนิเวศ",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/3943937308306776239_0"
+            },
+            {
+                name: "เศษใบไม้แห้ง",
+                category: "green",
+                categoryText: "ขยะอินทรีย์ / เปียก",
+                desc: "ซากพืชและเศษไม้ หมักทำปุ๋ยบำรุงดินได้เป็นอย่างดี",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/6149423612491979920_0"
+            },
+            {
+                name: "หนังสือพิมพ์เก่า",
+                category: "yellow",
+                categoryText: "ขยะรีไซเคิล",
+                desc: "เยื่อกระดาษนำกลับมาปั่นทำกระดาษรีไซเคิลใช้งานใหม่ได้",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/16276190525564669468_0"
+            },
+            {
+                name: "หลอดดูดน้ำพลาสติก",
+                category: "blue",
+                categoryText: "ขยะทั่วไป",
+                desc: "ขนาดเล็กและปนเปื้อน นำมารีไซเคิลได้ยาก จึงจัดเป็นขยะทั่วไป",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/6000646830109702143_0"
+            },
+            {
+                name: "เศษก้างปลา / กระดูกสัตว์",
+                category: "green",
+                categoryText: "ขยะอินทรีย์ / เปียก",
+                desc: "เศษอาหารจากการรับประทาน เน่าเสียย่อยสลายได้",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/5267618090076567742_0"
+            },
+            {
+                name: "กระป๋องสเปรย์สี / เคมี",
+                category: "red",
+                categoryText: "ขยะอันตราย",
+                desc: "มีแรงดันและสารระเหยไวไฟ อาจเกิดการระเบิดหากโดนความร้อน",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/9998235839304164886_0"
+            },
+            {
+                name: "ซองขนมขบเคี้ยว / ซองฟอยล์",
+                category: "blue",
+                categoryText: "ขยะทั่วไป",
+                desc: "วัสดุซ้อนกันหลายชั้น (Laminate) แยกรีไซเคิลยาก ต้องทิ้งถังขยะทั่วไป",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/166482163903176803_0"
+            },
+            {
+                name: "ถุงซองเครื่องปรุง / ซองพริกน้ำปลา",
+                category: "blue",
+                categoryText: "ขยะทั่วไป",
+                desc: "ปนเปื้อนคราบอาหารและน้ำมันสูง ทิ้งถังขยะทั่วไปเพื่อนำไปเผาพลังงาน",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/6662224579098777019_0"
+            },
+            {
+                name: "กระป๋องสเปรย์ยาฉีดยุง",
+                category: "red",
+                categoryText: "ขยะอันตราย",
+                desc: "บรรจุสารพิษฆ่าแมลงเคมีอันตราย ต้องรวบรวมส่งทิ้งขยะอันตราย",
+                img: "http://googleusercontent.com/image_collection/image_retrieval/9998235839304164886_0"
+            }
+        ];
+
+        // Bin Configuration Map
+        const binNames = {
+            green: { text: "ขยะอินทรีย์", colorClass: "text-emerald-400" },
+            yellow: { text: "ขยะรีไซเคิล", colorClass: "text-amber-400" },
+            blue: { text: "ขยะทั่วไป", colorClass: "text-blue-400" },
+            red: { text: "ขยะอันตราย", colorClass: "text-rose-400" }
+        };
+
+        // Game State Variables
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let correctCount = 0;
+        let timer = null;
+        let timeLeft = 10.0; // 10 seconds limit per question
+        const maxTime = 10.0;
+        let shuffledQuestions = [];
+        let userHistory = [];
+
+        function startGame() {
+            // Reset state
+            currentQuestionIndex = 0;
+            score = 0;
+            correctCount = 0;
+            userHistory = [];
+            
+            // Shuffle 20 questions
+            shuffledQuestions = [...trashData].sort(() => Math.random() - 0.5);
+
+            // Hide/Show screens
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+
+            loadQuestion();
         }
-        currentIndex++;
-        loadQuestion();
-    }
 
-    function finishGame() {
-        timeUsed = 30 - timeLeft;
-        document.getElementById("game-area").style.display = "none";
-        document.getElementById("result-modal").style.display = "block";
-        document.getElementById("score-text").innerText = `คุณ ${playerName} ได้ ${score} / ${items.length} คะแนน!`;
-        document.getElementById("time-text").innerText = `ใช้เวลาไปทั้งสิ้น ${timeUsed} วินาที`;
-        
-        sendDataToSheets();
-    }
+        function loadQuestion() {
+            clearInterval(timer);
+            
+            if (currentQuestionIndex >= shuffledQuestions.length) {
+                showResults();
+                return;
+            }
 
-    function sendDataToSheets() {
-        if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
-            document.getElementById("status-text").innerText = "(ทดสอบเล่นแบบยังไม่ต่อ Google Sheets)";
-            return;
+            const current = shuffledQuestions[currentQuestionIndex];
+
+            // Update UI Element text
+            document.getElementById('current-question-num').textContent = currentQuestionIndex + 1;
+            document.getElementById('score-display').textContent = score;
+            document.getElementById('trash-name').textContent = current.name;
+            document.getElementById('trash-desc').textContent = current.desc;
+            document.getElementById('trash-image').src = current.img;
+
+            // Reset Timer to 10.0 seconds
+            timeLeft = maxTime;
+            updateTimerUI();
+
+            // Start Countdown Timer
+            const startTime = Date.now();
+            timer = setInterval(() => {
+                const elapsed = (Date.now() - startTime) / 1000;
+                timeLeft = Math.max(0, maxTime - elapsed);
+                updateTimerUI();
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    timeOutAnswer();
+                }
+            }, 50);
         }
 
-        fetch(SCRIPT_URL, {
-            method: "POST",
-            body: JSON.stringify({
-                name: playerName,
-                score: score,
-                timeUsed: timeUsed
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById("status-text").innerText = "✅ บันทึกคะแนนลง Google Sheets เรียบร้อย!";
-        })
-        .catch(err => {
-            document.getElementById("status-text").innerText = "⚠️ บันทึกคะแนนสำเร็จ";
-            console.error(err);
-        });
-    }
+        function updateTimerUI() {
+            const timerText = document.getElementById('timer-text');
+            const timerBar = document.getElementById('timer-bar');
 
-    function showLeaderboard() {
-        document.getElementById("result-modal").style.display = "none";
-        document.getElementById("leaderboard-area").style.display = "block";
-        
-        if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
-            document.getElementById("leaderboard-table").innerText = "ยังไม่ได้เชื่อมต่อระบบฐานข้อมูล";
-            return;
+            timerText.textContent = timeLeft.toFixed(1) + "s";
+            const percent = (timeLeft / maxTime) * 100;
+            timerBar.style.width = percent + "%";
+
+            // Color shift based on remaining time
+            if (timeLeft <= 3.0) {
+                timerBar.className = "timer-bar bg-rose-500 h-full rounded-full w-full timer-urgent";
+                timerText.className = "font-bold text-rose-400 text-sm animate-bounce";
+            } else if (timeLeft <= 6.0) {
+                timerBar.className = "timer-bar bg-amber-400 h-full rounded-full w-full";
+                timerText.className = "font-bold text-amber-400 text-sm";
+            } else {
+                timerBar.className = "timer-bar bg-emerald-400 h-full rounded-full w-full";
+                timerText.className = "font-bold text-emerald-400 text-sm";
+            }
         }
 
-        fetch(SCRIPT_URL)
-        .then(res => res.json())
-        .then(data => {
-            let html = "<table><tr><th>อันดับ</th><th>ชื่อ</th><th>คะแนน</th><th>เวลา (วิ)</th></tr>";
-            data.slice(0, 10).forEach((row, idx) => {
-                html += `<tr><td>${idx+1}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td></tr>`;
+        function checkAnswer(selectedCategory) {
+            clearInterval(timer);
+            const current = shuffledQuestions[currentQuestionIndex];
+            const isCorrect = (selectedCategory === current.category);
+
+            if (isCorrect) {
+                playSound('correct');
+                // Calculate time bonus score (Base 100 + Remaining time * 10)
+                const timeBonus = Math.round(timeLeft * 10);
+                const questionScore = 100 + timeBonus;
+                score += questionScore;
+                correctCount++;
+
+                userHistory.push({
+                    name: current.name,
+                    correct: true,
+                    userAns: binNames[selectedCategory].text,
+                    correctAns: binNames[current.category].text,
+                    timeUsed: (maxTime - timeLeft).toFixed(1)
+                });
+            } else {
+                playSound('wrong');
+                userHistory.push({
+                    name: current.name,
+                    correct: false,
+                    userAns: binNames[selectedCategory].text,
+                    correctAns: binNames[current.category].text,
+                    timeUsed: (maxTime - timeLeft).toFixed(1)
+                });
+            }
+
+            currentQuestionIndex++;
+            setTimeout(loadQuestion, 200);
+        }
+
+        function timeOutAnswer() {
+            playSound('wrong');
+            const current = shuffledQuestions[currentQuestionIndex];
+            userHistory.push({
+                name: current.name,
+                correct: false,
+                userAns: "หมดเวลา",
+                correctAns: binNames[current.category].text,
+                timeUsed: "10.0"
             });
-            html += "</table>";
-            document.getElementById("leaderboard-table").innerHTML = html;
-        })
-        .catch(err => {
-            document.getElementById("leaderboard-table").innerText = "ไม่สามารถโหลดตารางคะแนนได้";
-        });
-    }
 
-    function resetGame() {
-        document.getElementById("start-screen").style.display = "block";
-        document.getElementById("game-area").style.display = "none";
-        document.getElementById("result-modal").style.display = "none";
-        document.getElementById("leaderboard-area").style.display = "none";
-        document.getElementById("player-name").value = "";
-    }
-</script>
+            currentQuestionIndex++;
+            loadQuestion();
+        }
 
+        function showResults() {
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            document.getElementById('final-correct').textContent = correctCount;
+            document.getElementById('final-score').textContent = score;
+
+            const badge = document.getElementById('result-badge');
+            const title = document.getElementById('result-title');
+            const subtitle = document.getElementById('result-subtitle');
+
+            // Grade feedback
+            if (correctCount >= 18) {
+                badge.className = "w-20 h-20 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-4 text-4xl border border-emerald-500/40";
+                badge.innerHTML = '<i class="fa-solid fa-trophy"></i>';
+                title.textContent = "สุดยอดนักแยกขยะมืออาชีพ!";
+                subtitle.textContent = "คุณมีความรู้ในการแยกขยะดีเยี่ยม เป็นแบบอย่างที่ดีเพื่อสิ่งแวดล้อม!";
+            } else if (correctCount >= 12) {
+                badge.className = "w-20 h-20 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto mb-4 text-4xl border border-amber-500/40";
+                badge.innerHTML = '<i class="fa-solid fa-medal"></i>';
+                title.textContent = "เก่งมาก! ทำได้ดี";
+                subtitle.textContent = "คุณแยกขยะถูกต้องเกือบครบ ลองฝึกฝนอีกนิดจะแม่นยำ 100%";
+            } else {
+                badge.className = "w-20 h-20 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto mb-4 text-4xl border border-rose-500/40";
+                badge.innerHTML = '<i class="fa-solid fa-seedling"></i>';
+                title.textContent = "พยายามต่อไปนะ!";
+                subtitle.textContent = "ลองศึกษาทบทวนการแยกขยะแต่ละประเภท แล้วมาท้าทายใหม่อีกครั้ง";
+            }
+
+            // Populate history list
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = userHistory.map((item, idx) => `
+                <div class="flex items-center justify-between p-2 rounded-lg ${item.correct ? 'bg-emerald-950/40 border border-emerald-500/30' : 'bg-rose-950/40 border border-rose-500/30'}">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold w-5 text-right ${item.correct ? 'text-emerald-400' : 'text-rose-400'}">${idx + 1}.</span>
+                        <span class="text-slate-200 font-medium">${item.name}</span>
+                    </div>
+                    <div class="text-right">
+                        ${item.correct 
+                            ? `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check"></i> ${item.correctAns} (${item.timeUsed}s)</span>`
+                            : `<span class="text-rose-400"><i class="fa-solid fa-xmark"></i> ${item.userAns} <span class="text-slate-400">(เฉลย: ${item.correctAns})</span></span>`
+                        }
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
 </body>
 </html>
