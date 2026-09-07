@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เกมคัดแยกขยะแสนสนุก♻️</title>
+    <style>
+        body { font-family: 'Tahoma', sans-serif; text-align: center; background-color: #f0f4f8; margin: 0; padding: 15px; }
+        .container { max-width: 480px; margin: 0 auto; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; margin-bottom: 10px; }
+        input[type="text"] { width: 80%; padding: 12px; margin: 15px 0; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; }
+        .btn-start, .submit-btn { padding: 12px 24px; background-color: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .timer-box { font-size: 18px; font-weight: bold; color: #d97706; background: #fef3c7; padding: 8px 15px; border-radius: 20px; display: inline-block; margin-bottom: 15px; }
+        .item-card { font-size: 26px; font-weight: bold; margin: 15px 0; padding: 20px; background: #e0f2fe; border-radius: 12px; border: 2px dashed #0284c7; }
+        .bin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+        .bin-btn { padding: 15px 5px; color: white; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; font-size: 15px; transition: transform 0.1s; }
+        .bin-btn:active { transform: scale(0.96); }
+        .green { background-color: #16a34a; }
+        .yellow { background-color: #eab308; color: #1e293b; }
+        .blue { background-color: #2563eb; }
+        .red { background-color: #dc2626; }
+        #result-modal, #leaderboard-area { display: none; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+        th { background-color: #f1f5f9; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>♻️ เกมคัดแยกขยะ</h2>
+
+    <!-- หน้าลงชื่อก่อนเล่น -->
+    <div id="start-screen">
+        <p>กรุณากรอกชื่อของคุณก่อนเริ่มเล่น:</p>
+        <input type="text" id="player-name" placeholder="ชื่อ / ฉายา / หมู่ที่" maxlength="20">
+        <br>
+        <button class="btn-start" onclick="startGame()">เริ่มเล่นเกม 🚀</button>
+    </div>
+
+    <!-- หน้าเล่นเกม -->
+    <div id="game-area" style="display: none;">
+        <div class="timer-box">⏱️ เวลาเหลือ: <span id="timer">30</span> วินาที</div>
+        <div style="font-weight: bold; color: #64748b;">ข้อที่ <span id="current-step">1</span> / <span id="total-step">5</span></div>
+        
+        <div class="item-card" id="item-display">กำลังโหลด...</div>
+        
+        <div class="bin-grid">
+            <button class="bin-btn green" onclick="selectBin('organic')">🟢 ขยะอินทรีย์</button>
+            <button class="bin-btn yellow" onclick="selectBin('recycle')">🟡 ขยะรีไซเคิล</button>
+            <button class="bin-btn blue" onclick="selectBin('general')">🔵 ขยะทั่วไป</button>
+            <button class="bin-btn red" onclick="selectBin('hazardous')">🔴 ขยะอันตราย</button>
+        </div>
+    </div>
+
+    <!-- หน้าแสดงผลคะแนน -->
+    <div id="result-modal">
+        <h3>🎉 สรุปผลคะแนน</h3>
+        <p id="score-text" style="font-size: 20px; font-weight: bold; color: #16a34a;"></p>
+        <p id="time-text" style="color: #64748b;"></p>
+        <p id="status-text" style="color: #2563eb;">กำลังบันทึกคะแนน...</p>
+        <button class="submit-btn" onclick="showLeaderboard()">🏆 ดูตารางคะแนนสูงสุด</button>
+        <button class="submit-btn" style="background-color: #64748b;" onclick="resetGame()">🔄 เล่นอีกครั้ง</button>
+    </div>
+
+    <!-- หน้าตารางคะแนน (Leaderboard) -->
+    <div id="leaderboard-area">
+        <h3>🏆 ตารางอันดับผู้เล่น (Top 10)</h3>
+        <div id="leaderboard-table">กำลังโหลดข้อมูล...</div>
+        <br>
+        <button class="submit-btn" onclick="resetGame()">🔄 กลับไปเริ่มใหม่</button>
+    </div>
+</div>
+
+<script>
+    // ** ใส่ Web App URL จาก Apps Script ที่นี่ **
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwT-lT8qtMHQIITJMYD1sax751fuWmO-fW0yhI4PpJ_akrMvnO9GgEI2aamO0Sa4A7JsQ/exec";
+
+    const items = [
+        { name: "🍎 เปลือกแอปเปิ้ล", type: "organic" },
+        { name: "🍾 ขวดแก้ว", type: "recycle" },
+        { name: "🛍️ ถุงพลาสติกเปื้อนแกง", type: "general" },
+        { name: "🔋 ถ่านไฟฉายใช้แล้ว", type: "hazardous" },
+        { name: "📦 กล่องกระดาษ", type: "recycle" }
+    ];
+
+    let playerName = "";
+    let currentIndex = 0;
+    let score = 0;
+    let timeLeft = 30;
+    let timerInterval;
+    let timeUsed = 0;
+
+    function startGame() {
+        playerName = document.getElementById("player-name").value.trim();
+        if (!playerName) {
+            alert("กรุณากรอกชื่อก่อนเริ่มเล่นครับ");
+            return;
+        }
+
+        document.getElementById("start-screen").style.display = "none";
+        document.getElementById("game-area").style.display = "block";
+        
+        currentIndex = 0;
+        score = 0;
+        timeLeft = 30;
+        
+        loadQuestion();
+        startTimer();
+    }
+
+    function startTimer() {
+        document.getElementById("timer").innerText = timeLeft;
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById("timer").innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                finishGame();
+            }
+        }, 1000);
+    }
+
+    function loadQuestion() {
+        if (currentIndex < items.length) {
+            document.getElementById("item-display").innerText = items[currentIndex].name;
+            document.getElementById("current-step").innerText = currentIndex + 1;
+            document.getElementById("total-step").innerText = items.length;
+        } else {
+            clearInterval(timerInterval);
+            finishGame();
+        }
+    }
+
+    function selectBin(selectedType) {
+        if (selectedType === items[currentIndex].type) {
+            score++;
+        }
+        currentIndex++;
+        loadQuestion();
+    }
+
+    function finishGame() {
+        timeUsed = 30 - timeLeft;
+        document.getElementById("game-area").style.display = "none";
+        document.getElementById("result-modal").style.display = "block";
+        document.getElementById("score-text").innerText = `คุณ ${playerName} ได้ ${score} / ${items.length} คะแนน!`;
+        document.getElementById("time-text").innerText = `ใช้เวลาไปทั้งสิ้น ${timeUsed} วินาที`;
+        
+        sendDataToSheets();
+    }
+
+    function sendDataToSheets() {
+        if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
+            document.getElementById("status-text").innerText = "(ทดสอบเล่นแบบยังไม่ต่อ Google Sheets)";
+            return;
+        }
+
+        fetch(SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                name: playerName,
+                score: score,
+                timeUsed: timeUsed
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("status-text").innerText = "✅ บันทึกคะแนนลง Google Sheets เรียบร้อย!";
+        })
+        .catch(err => {
+            document.getElementById("status-text").innerText = "⚠️ บันทึกคะแนนสำเร็จ";
+            console.error(err);
+        });
+    }
+
+    function showLeaderboard() {
+        document.getElementById("result-modal").style.display = "none";
+        document.getElementById("leaderboard-area").style.display = "block";
+        
+        if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
+            document.getElementById("leaderboard-table").innerText = "ยังไม่ได้เชื่อมต่อระบบฐานข้อมูล";
+            return;
+        }
+
+        fetch(SCRIPT_URL)
+        .then(res => res.json())
+        .then(data => {
+            let html = "<table><tr><th>อันดับ</th><th>ชื่อ</th><th>คะแนน</th><th>เวลา (วิ)</th></tr>";
+            data.slice(0, 10).forEach((row, idx) => {
+                html += `<tr><td>${idx+1}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td></tr>`;
+            });
+            html += "</table>";
+            document.getElementById("leaderboard-table").innerHTML = html;
+        })
+        .catch(err => {
+            document.getElementById("leaderboard-table").innerText = "ไม่สามารถโหลดตารางคะแนนได้";
+        });
+    }
+
+    function resetGame() {
+        document.getElementById("start-screen").style.display = "block";
+        document.getElementById("game-area").style.display = "none";
+        document.getElementById("result-modal").style.display = "none";
+        document.getElementById("leaderboard-area").style.display = "none";
+        document.getElementById("player-name").value = "";
+    }
+</script>
+
+</body>
+</html>
