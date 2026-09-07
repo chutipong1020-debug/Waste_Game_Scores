@@ -10,11 +10,13 @@
         h2 { color: #2c3e50; margin-bottom: 10px; }
         input[type="text"] { width: 80%; padding: 12px; margin: 15px 0; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; }
         .btn-start, .submit-btn { padding: 12px 24px; background-color: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .timer-box { font-size: 18px; font-weight: bold; color: #d97706; background: #fef3c7; padding: 8px 15px; border-radius: 20px; display: inline-block; margin-bottom: 15px; }
         
-        /* ปรับแต่งการแสดงผลรูปขยะให้ใหญ่ขึ้น */
-        .item-card { margin: 15px 0; padding: 15px; background: #e0f2fe; border-radius: 12px; border: 2px dashed #0284c7; }
-        .item-image { width: 140px; height: 140px; object-fit: contain; margin-bottom: 10px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        .timer-box { font-size: 18px; font-weight: bold; color: #d97706; background: #fef3c7; padding: 8px 15px; border-radius: 20px; display: inline-block; margin-bottom: 15px; }
+        .timer-danger { color: #dc2626 !important; background: #fee2e2 !important; animation: pulse 1s infinite; }
+
+        /* กรอบแสดงรูปภาพขยะแบบคมชัด ไม่พึ่งลิงก์ภายนอก */
+        .item-card { margin: 15px 0; padding: 20px 10px; background: #f0f9ff; border-radius: 16px; border: 2px dashed #0284c7; }
+        .item-icon { font-size: 90px; line-height: 100px; display: block; margin: 0 auto 10px auto; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15)); }
         .item-title { font-size: 22px; font-weight: bold; color: #0369a1; }
 
         .bin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
@@ -45,11 +47,11 @@
 
     <!-- หน้าเล่นเกม -->
     <div id="game-area" style="display: none;">
-        <div class="timer-box">⏱️ เวลาเหลือ: <span id="timer">15</span> วินาที</div>
+        <div id="timer-container" class="timer-box">⏱️ เวลาข้อนี้เหลือ: <span id="timer">15</span> วินาที</div>
         <div style="font-weight: bold; color: #64748b;">ข้อที่ <span id="current-step">1</span> / <span id="total-step">20</span></div>
         
         <div class="item-card">
-            <img id="item-image" class="item-image" src="" alt="รูปขยะ">
+            <span id="item-icon" class="item-icon">🗑️</span>
             <div id="item-display" class="item-title">กำลังโหลด...</div>
         </div>
         
@@ -84,40 +86,39 @@
     // ** ใส่ Web App URL จาก Apps Script ที่นี่ **
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQhLfqEWbwqm8ZM2_ApJiwVaJf1Dp32kuf-IvGmbCjryYNz5z7lMSK16rXDfe3khNSwA/exec";
 
-    // ตั้งค่าเวลาต่อข้อ (15 วินาที)
-    const TIME_PER_QUESTION = 15;
+    // กำหนดเวลาต่อข้อ (15 วินาที)
+    const SECONDS_PER_QUESTION = 15;
 
-    // รายการขยะ 20 ข้อ พร้อมรูปภาพ
+    // รายการขยะ 20 ข้อ พร้อม Emoji ไอคอนขนาดใหญ่
     const items = [
-        { name: "🍎 เปลือกแอปเปิ้ล", type: "organic", img: "http://googleusercontent.com/image_collection/image_retrieval/13789080925302584544_0" },
-        { name: "🍾 ขวดแก้ว", type: "recycle", img: "http://googleusercontent.com/image_collection/image_retrieval/2529102794871744193_0" },
-        { name: "🛍️ ถุงพลาสติกเปื้อนแกง", type: "general", img: "http://googleusercontent.com/image_collection/image_retrieval/6662224579098777019_0" },
-        { name: "🔋 ถ่านไฟฉายใช้แล้ว", type: "hazardous", img: "http://googleusercontent.com/image_collection/image_retrieval/10789061098946325886_0" },
-        { name: "📦 กล่องกระดาษ", type: "recycle", img: "http://googleusercontent.com/image_collection/image_retrieval/17541365655006504967_0" },
-        { name: "🥤 ขวดน้ำพลาสติก", type: "recycle", img: "http://googleusercontent.com/image_collection/image_retrieval/13800923845912576784_0" },
-        { name: "🍌 เปลือกกล้วย", type: "organic", img: "http://googleusercontent.com/image_collection/image_retrieval/14833844145194089224_0" },
-        { name: "🍿 ถุงซองขนมขบเคี้ยว", type: "general", img: "http://googleusercontent.com/image_collection/image_retrieval/166482163903176803_0" },
-        { name: "💡 หลอดไฟฟลูออเรสเซนต์", type: "hazardous", img: "http://googleusercontent.com/image_collection/image_retrieval/6460920545754282122_0" },
-        { name: "🥫 กระป๋องน้ำอัดลม", type: "recycle", img: "http://googleusercontent.com/image_collection/image_retrieval/14427006820685565184_0" },
-        { name: "🍱 กล่องโฟมบรรจุอาหาร", type: "general", img: "http://googleusercontent.com/image_collection/image_retrieval/18339056650220434956_0" },
-        { name: "💊 ยาหมดอายุ", type: "hazardous", img: "http://googleusercontent.com/image_collection/image_retrieval/3943937308306776239_0" },
-        { name: "🦴 ก้างปลา / เศษอาหาร", type: "organic", img: "http://googleusercontent.com/image_collection/image_retrieval/5267618090076567742_0" },
-        { name: "💨 กระป๋องสเปรย์สี", type: "hazardous", img: "http://googleusercontent.com/image_collection/image_retrieval/9998235839304164886_0" },
-        { name: "🥤 หลอดดูดน้ำพลาสติก", type: "general", img: "http://googleusercontent.com/image_collection/image_retrieval/6000646830109702143_0" },
-        { name: "📰 หนังสือพิมพ์เก่า", type: "recycle", img: "http://googleusercontent.com/image_collection/image_retrieval/16276190525564669468_0" },
-        { name: "🍂 ใบไม้แห้ง", type: "organic", img: "http://googleusercontent.com/image_collection/image_retrieval/6149423612491979920_0" },
-        { name: "🥛 กล่องนม UHT", type: "recycle", img: "http://googleusercontent.com/image_collection/image_retrieval/6780692699786980324_0" },
-        { name: "🧻 กระดาษทิชชูที่ใช้แล้ว", type: "general", img: "http://googleusercontent.com/image_collection/image_retrieval/6662224579098777019_0" },
-        { name: "🔋 แบตเตอรี่มือถือบวม", type: "hazardous", img: "http://googleusercontent.com/image_collection/image_retrieval/10789061098946325886_0" }
+        { name: "เปลือกแอปเปิ้ล", type: "organic", icon: "🍎" },
+        { name: "ขวดแก้ว", type: "recycle", icon: "🍾" },
+        { name: "ถุงพลาสติกเปื้อนแกง", type: "general", icon: "🛍️" },
+        { name: "ถ่านไฟฉายใช้แล้ว", type: "hazardous", icon: "🔋" },
+        { name: "กล่องกระดาษ", type: "recycle", icon: "📦" },
+        { name: "ขวดน้ำพลาสติก", type: "recycle", icon: "🥤" },
+        { name: "เปลือกกล้วย", type: "organic", icon: "🍌" },
+        { name: "ซองขนมขบเคี้ยว", type: "general", icon: "🍿" },
+        { name: "หลอดไฟฟลูออเรสเซนต์", type: "hazardous", icon: "💡" },
+        { name: "กระป๋องน้ำอัดลม", type: "recycle", icon: "🥫" },
+        { name: "กล่องโฟมบรรจุอาหาร", type: "general", icon: "🍱" },
+        { name: "ยาหมดอายุ", type: "hazardous", icon: "💊" },
+        { name: "ก้างปลา / เศษอาหาร", type: "organic", icon: "🦴" },
+        { name: "กระป๋องสเปรย์สี", type: "hazardous", icon: "💨" },
+        { name: "หลอดดูดน้ำพลาสติก", type: "general", icon: "🥤" },
+        { name: "หนังสือพิมพ์เก่า", type: "recycle", icon: "📰" },
+        { name: "ใบไม้แห้ง", type: "organic", icon: "🍂" },
+        { name: "กล่องนม UHT", type: "recycle", icon: "🥛" },
+        { name: "กระดาษทิชชูใช้แล้ว", type: "general", icon: "🧻" },
+        { name: "แบตเตอรี่มือถือบวม", type: "hazardous", icon: "🔋" }
     ];
 
     let playerName = "";
     let currentIndex = 0;
     let score = 0;
-    let totalTimeLimit = items.length * TIME_PER_QUESTION; // เวลาคำนวณรวม (300 วินาที)
-    let timeLeft = totalTimeLimit;
+    let questionTimeLeft = SECONDS_PER_QUESTION;
     let timerInterval;
-    let timeUsed = 0;
+    let totalTimeUsed = 0;
 
     function startGame() {
         playerName = document.getElementById("player-name").value.trim();
@@ -131,37 +132,55 @@
         
         currentIndex = 0;
         score = 0;
-        timeLeft = items.length * TIME_PER_QUESTION;
+        totalTimeUsed = 0;
         
         loadQuestion();
-        startTimer();
-    }
-
-    function startTimer() {
-        document.getElementById("timer").innerText = timeLeft;
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            document.getElementById("timer").innerText = timeLeft;
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                finishGame();
-            }
-        }, 1000);
     }
 
     function loadQuestion() {
         if (currentIndex < items.length) {
+            // อัปเดตข้อมูลข้อสอบ
             document.getElementById("item-display").innerText = items[currentIndex].name;
-            document.getElementById("item-image").src = items[currentIndex].img;
+            document.getElementById("item-icon").innerText = items[currentIndex].icon;
             document.getElementById("current-step").innerText = currentIndex + 1;
             document.getElementById("total-step").innerText = items.length;
+
+            // รีเซ็ตเวลานับถอยหลังรายข้อ
+            resetQuestionTimer();
         } else {
-            clearInterval(timerInterval);
             finishGame();
         }
     }
 
+    function resetQuestionTimer() {
+        clearInterval(timerInterval);
+        questionTimeLeft = SECONDS_PER_QUESTION;
+        
+        const timerBox = document.getElementById("timer-container");
+        timerBox.classList.remove("timer-danger");
+        document.getElementById("timer").innerText = questionTimeLeft;
+
+        timerInterval = setInterval(() => {
+            questionTimeLeft--;
+            totalTimeUsed++;
+            document.getElementById("timer").innerText = questionTimeLeft;
+
+            // เตือนเมื่อเวลาเหลือต่ำกว่า 5 วินาที
+            if (questionTimeLeft <= 5) {
+                timerBox.classList.add("timer-danger");
+            }
+
+            // หมดเวลาในข้อนี้ -> ข้ามไปข้อถัดไป
+            if (questionTimeLeft <= 0) {
+                clearInterval(timerInterval);
+                currentIndex++;
+                loadQuestion();
+            }
+        }, 1000);
+    }
+
     function selectBin(selectedType) {
+        clearInterval(timerInterval);
         if (selectedType === items[currentIndex].type) {
             score++;
         }
@@ -170,11 +189,11 @@
     }
 
     function finishGame() {
-        timeUsed = (items.length * TIME_PER_QUESTION) - timeLeft;
+        clearInterval(timerInterval);
         document.getElementById("game-area").style.display = "none";
         document.getElementById("result-modal").style.display = "block";
         document.getElementById("score-text").innerText = `คุณ ${playerName} ได้ ${score} / ${items.length} คะแนน!`;
-        document.getElementById("time-text").innerText = `ใช้เวลาไปทั้งสิ้น ${timeUsed} วินาที`;
+        document.getElementById("time-text").innerText = `ใช้เวลาเล่นรวมทั้งหมด ${totalTimeUsed} วินาที`;
         
         sendDataToSheets();
     }
@@ -190,7 +209,7 @@
             body: JSON.stringify({
                 name: playerName,
                 score: score,
-                timeUsed: timeUsed
+                timeUsed: totalTimeUsed
             })
         })
         .then(res => res.json())
@@ -228,6 +247,7 @@
     }
 
     function resetGame() {
+        clearInterval(timerInterval);
         document.getElementById("start-screen").style.display = "block";
         document.getElementById("game-area").style.display = "none";
         document.getElementById("result-modal").style.display = "none";
